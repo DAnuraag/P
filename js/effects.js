@@ -472,37 +472,23 @@ export function throwKisses(x, y, n = 30) {
 }
 
 /* ───────────── 11 · MUSIC (starts on the first tap: "Tap anywhere to begin" on the loader) ───────────── */
-export function initMusic(file) {
-  const btn = document.getElementById('musicBtn'), toast = document.getElementById('toast');
-  let audio, t, userPaused = false;
-  const say = msg => { toast.textContent = msg; toast.classList.add('is-on'); clearTimeout(t); t = setTimeout(() => toast.classList.remove('is-on'), 3600); };
-  const set = on => { btn.setAttribute('aria-pressed', on); btn.setAttribute('aria-label', on ? 'Pause music' : 'Play music'); };
-  const make = () => { if (!audio) { audio = new Audio(file); audio.loop = true; audio.volume = 0.65; } return audio; };
-
-  btn.addEventListener('click', async () => {
-    userPaused = false;
-    make();
-    if (audio.paused) {
-      try { await audio.play(); set(true); } catch { audio = null; set(false); say(`Add your song at ${file}`); }
-    } else { audio.pause(); userPaused = true; set(false); }
-  });
-
-  /* AUTOPLAY: browsers only allow sound after the visitor has touched the page.
-     So we try straight away (works if the browser allows it), and if it is blocked
-     the loader asks for one tap (see tapGate above); any click / tap / key press after that also starts it. */
-  const tryStart = async () => {
-    if (userPaused || (audio && !audio.paused)) return true;
-    try { await make().play(); set(true); return true; } catch { audio = null; return false; }
-  };
-  window.__music = { start: tryStart, playing: () => !!audio && !audio.paused };
-  tryStart().then(ok => {
-    if (ok) return;
-    const evs = ['pointerdown', 'keydown', 'touchend'];
-    const first = async e => {
-      if (btn.contains(e.target)) { off(); return; }            // the music button handles itself
-      if (await tryStart()) off();
-    };
-    const off = () => evs.forEach(n => removeEventListener(n, first, true));
-    evs.forEach(n => addEventListener(n, first, { capture: true, passive: true }));
+function tapGate(root) {
+  return new Promise(res => {
+    const m = window.__music;
+    if (!m || m.playing()) return res();
+    const txt = root.querySelector('.loader__text');
+    document.getElementById('loaderPct').textContent = '100';            // let her see 100% first
+    gsap.to(txt, { opacity: 0, duration: 0.3, delay: 0.7, onComplete: () => {
+      txt.textContent = 'Tap anywhere to begin';
+      const pulse = gsap.fromTo(txt, { opacity: 0 }, { opacity: 1, duration: 0.5, onComplete: () => gsap.to(txt, { opacity: 0.35, duration: 0.8, yoyo: true, repeat: -1, ease: 'sine.inOut' }) });
+      const evs = ['click', 'keydown', 'touchend', 'wheel'];
+      const go = e => {
+        if (e.type !== 'wheel') m.start();                  // must run inside the gesture itself
+        evs.forEach(n => removeEventListener(n, go, true));
+        gsap.killTweensOf(txt); gsap.set(txt, { opacity: 1 });
+        res();
+      };
+      evs.forEach(n => addEventListener(n, go, { capture: true, passive: true }));
+    } });
   });
 }

@@ -23,6 +23,11 @@ window.__booted = true;      // index.html shows a hint if this never gets set
 async function boot() {
   measure();
   const refs = renderContent(config, reduceMQ.matches);
+  
+  /* ✓ CRITICAL: Initialize music FIRST, before the loader even starts, 
+     so tapGate() can find window.__music and wait for a tap */
+  fx.initMusic(config.musicFile);
+  
   const loader = fx.createLoader(config.partnerName);
 
   /* build the scene DOM, then put UI/FX *between* the art layers */
@@ -99,10 +104,6 @@ async function boot() {
 
   /* loader lifts → hero intro */
   await loader.out();
-  
-  /* CRITICAL: Initialize music AFTER loader completes, so it waits for tap */
-  fx.initMusic(config.musicFile);
-  
   window.__lenis?.start();
   intro(title);
   ScrollTrigger.refresh();

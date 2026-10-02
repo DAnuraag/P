@@ -27,16 +27,37 @@ export function createLoader(partner) {
         onUpdate: () => { gsap.set(fill, { y: 28 * (1 - state.p) }); pct.textContent = Math.round(state.p * 100); } });
     },
     out() {
-      return new Promise(res => {
+      return tapGate(root).then(() => new Promise(res => {
         gsap.timeline({ onComplete: () => { root.remove(); document.body.classList.remove('is-loading'); res(); } })
           .to(state, { p: 1, duration: 0.45, onUpdate: () => { gsap.set(fill, { y: 28 * (1 - state.p) }); pct.textContent = Math.round(state.p * 100); } })
           .to(root.querySelector('.loader__heart'), { scale: 1.18, duration: 0.45, ease: 'power2.out', yoyo: true, repeat: 1, transformOrigin: '50% 60%' }, '<')
           .to(root.querySelector('.loader__text'), { opacity: 0, duration: 0.3 }, '-=0.2')
           .to(root.querySelector('.loader__heart'), { y: -120, opacity: 0, duration: 0.7, ease: 'power3.in' }, '+=0.05')
           .to(root, { yPercent: -100, duration: 1.1, ease: 'power4.inOut' }, '-=0.3');
-      });
+      }));
     }
   };
+}
+
+/* The browser only lets a page play sound after a real click / tap / key press, so when the music did not
+   start by itself the loader waits for ONE tap ("Tap anywhere to begin"). That tap starts the song, then the page opens.
+   Scrolling alone also opens the page (no sound without a tap; the first click afterwards starts it). */
+function tapGate(root) {
+  return new Promise(res => {
+    const m = window.__music;
+    if (!m || m.playing()) return res();
+    const txt = root.querySelector('.loader__text');
+    txt.textContent = 'Tap anywhere to begin';
+    const pulse = gsap.to(txt, { opacity: 0.35, duration: 0.8, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+    const evs = ['click', 'keydown', 'touchend', 'wheel'];
+    const go = e => {
+      if (e.type !== 'wheel') m.start();                  // must run inside the gesture itself
+      evs.forEach(n => removeEventListener(n, go, true));
+      pulse.kill(); gsap.set(txt, { opacity: 1 });
+      res();
+    };
+    evs.forEach(n => addEventListener(n, go, { capture: true, passive: true }));
+  });
 }
 
 /* ───────────── 2 · SUN (+ heart halo), MOON, STARS ───────────── */
@@ -450,7 +471,7 @@ export function throwKisses(x, y, n = 30) {
   }
 }
 
-/* ───────────── 11 · MUSIC (plays only after a click) ───────────── */
+/* ───────────── 11 · MUSIC (starts on the first tap: "Tap anywhere to begin" on the loader) ───────────── */
 export function initMusic(file) {
   const btn = document.getElementById('musicBtn'), toast = document.getElementById('toast');
   let audio, t, userPaused = false;
@@ -466,15 +487,19 @@ export function initMusic(file) {
     } else { audio.pause(); userPaused = true; set(false); }
   });
 
+  /* AUTOPLAY: browsers only allow sound after the visitor has touched the page.
+     So we try straight away (works if the browser allows it), and if it is blocked
+     the loader asks for one tap (see tapGate above); any click / tap / key press after that also starts it. */
   const tryStart = async () => {
     if (userPaused || (audio && !audio.paused)) return true;
     try { await make().play(); set(true); return true; } catch { audio = null; return false; }
   };
+  window.__music = { start: tryStart, playing: () => !!audio && !audio.paused };
   tryStart().then(ok => {
     if (ok) return;
     const evs = ['pointerdown', 'keydown', 'touchend'];
     const first = async e => {
-      if (btn.contains(e.target)) { off(); return; }
+      if (btn.contains(e.target)) { off(); return; }            // the music button handles itself
       if (await tryStart()) off();
     };
     const off = () => evs.forEach(n => removeEventListener(n, first, true));

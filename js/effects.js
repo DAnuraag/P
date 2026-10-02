@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 //  EFFECTS: loader, sun/moon/stars, mist, hearts pool, birds, petals,
 //  sparkles, glass chips, custom cursor, particles, music, heart burst.
-// ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════
 import gsap from 'gsap';
 import SplitType from 'split-type';
 import { view, pointer, probeImage } from './parallax.js';
@@ -11,7 +11,7 @@ import { perf } from './perf.js';
 const R = gsap.utils.random;
 const mk = (cls, tag = 'div', parent) => { const e = document.createElement(tag); e.className = cls; parent?.appendChild(e); return e; };
 const isMobile = () => matchMedia('(max-width: 768px)').matches;
-export const HEART_SVG = c => `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'><path fill='${c}' d='M16 27.5C4 19 0 12.5 0 8 0 3.5 3.5 0 8 0c3.5 0 6.5 2 8 5C17.5 2 20.5 0 24 0c4.5 0 8 3.5 8 8 0 4.5-4 11-16 19.5Z'/></svg>`)}`;
+export const HEART_SVG = c => `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'><path fill='${c}' d='M16 27.5C4 19 0 12.5 0 8 0 3.5 3.5 0 8[...`);
 
 /* ───────────── 1 · LOADER ───────────── */
 export function createLoader(partner) {
@@ -58,6 +58,47 @@ function tapGate(root) {
     };
     evs.forEach(n => addEventListener(n, go, { capture: true, passive: true }));
   });
+}
+
+export function initMusic(src) {
+  const audio = new Audio(src);
+  audio.preload = 'auto';
+  audio.loop = true;
+  audio.volume = 0.7;
+  const music = {
+    el: audio,
+    playing() {
+      return !audio.paused && !audio.ended && audio.currentTime > 0;
+    },
+    start() {
+      if (!audio.src) audio.src = src;
+      if (audio.paused) return audio.play().catch(() => {});
+      return Promise.resolve();
+    },
+    stop() {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  };
+  window.__music = music;
+
+  const musicBtn = document.getElementById('musicBtn');
+  const syncBtn = active => {
+    if (!musicBtn) return;
+    musicBtn.setAttribute('aria-pressed', String(active));
+    musicBtn.classList.toggle('is-on', active);
+  };
+  musicBtn?.addEventListener('click', async () => {
+    if (music.playing()) {
+      music.stop();
+      syncBtn(false);
+      return;
+    }
+    await music.start();
+    syncBtn(true);
+  }, { passive: true });
+
+  return music;
 }
 
 /* ───────────── 2 · SUN (+ heart halo), MOON, STARS ───────────── */
@@ -216,7 +257,7 @@ export async function mountCritters(items) {
     const fall = (first) => {
       const dur = R(10, 18), x0 = R(view.vw * 0.3, view.vw * 1.15), sc = R(0.7, 1.5);
       const tl = gsap.timeline({ delay: first ? R(0, 8) : R(0, 3), onComplete: () => fall(false) });
-      tl.fromTo(p, { x: x0, y: -40, scale: sc, opacity: 0, rotation: R(0, 360) }, { x: x0 - R(view.vw * 0.35, view.vw * 0.7), y: view.vh + 40, duration: dur, ease: 'none', rotation: `+=${R(180, 540)}` }, 0)
+      tl.fromTo(p, { x: x0, y: -40, scale: sc, opacity: 0, rotation: R(0, 360) }, { x: x0 - R(view.vw * 0.35, view.vw * 0.7), y: view.vh + 40, duration: dur, ease: 'none', rotation: `+=${R(180, 5[...`;
         .to(p, { rotationX: R(240, 720), rotationY: R(240, 720), duration: dur, ease: 'none' }, 0)
         .to(p, { opacity: 0.9, duration: 1 }, 0).to(p, { opacity: 0, duration: 1.2 }, dur - 1.2);
       kills.push(tl);
@@ -323,8 +364,7 @@ export function burstHearts(x, y, n = 30, opt = {}) {
     el.style.setProperty('--hs', R(s0, s1) + 'px');
     const ang = R(0, Math.PI * 2), dist = R(d0, d1);
     gsap.fromTo(el, { x, y, scale: 0.2, opacity: 1, rotation: R(-30, 30) },
-      { x: gsap.utils.clamp(0, Math.max(0, innerWidth - 64), x + Math.cos(ang) * dist), y: y + Math.sin(ang) * dist - R(40, 160) * (d1 / 340), scale: R(0.8, 1.5), rotation: R(-80, 80), duration: R(1.1, 2), ease: 'power3.out',
-        onComplete: () => gsap.to(el, { opacity: 0, y: '+=60', duration: 0.6, onComplete: () => { delete el.dataset.busy; } }) });
+      { x: gsap.utils.clamp(0, Math.max(0, innerWidth - 64), x + Math.cos(ang) * dist), y: y + Math.sin(ang) * dist - R(40, 160) * (d1 / 340), scale: R(0.8, 1.5), rotation: R(-80, 80), duration: [...] });
   }
 }
 
@@ -387,7 +427,7 @@ export function initButterflies(count) {
     const tx = clampX(follow ? pointerPx.x + R(-130, 130) : R(20, view.vw - 70));
     const ty = clampY(follow ? pointerPx.y + R(-110, 90) : R(60, view.vh - 80));
     const ang = Math.atan2(ty - cy, tx - cx) * 180 / Math.PI + 90;                                // the sprite faces up
-    b.tw = gsap.to(b.el, { x: tx, y: ty, rotation: `${ang}_short`, duration: gsap.utils.clamp(1.6, 5.5, Math.hypot(tx - cx, ty - cy) / R(90, 140)), ease: 'sine.inOut', onComplete: () => fly(b) });
+    b.tw = gsap.to(b.el, { x: tx, y: ty, rotation: `${ang}_short`, duration: gsap.utils.clamp(1.6, 5.5, Math.hypot(tx - cx, ty - cy) / R(90, 140)), ease: 'sine.inOut', onComplete: () => fly(b) })[...];
   };
   const startle = b => {                                   // clicked: hearts, then it flutters off and comes back later
     const x = gsap.getProperty(b.el, 'x'), y = gsap.getProperty(b.el, 'y');
@@ -477,13 +517,13 @@ function tapGate(root) {
     const m = window.__music;
     if (!m || m.playing()) return res();
     const txt = root.querySelector('.loader__text');
-    document.getElementById('loaderPct').textContent = '100';            // let her see 100% first
+    document.getElementById('loaderPct').textContent = '100';
     gsap.to(txt, { opacity: 0, duration: 0.3, delay: 0.7, onComplete: () => {
       txt.textContent = 'Tap anywhere to begin';
       const pulse = gsap.fromTo(txt, { opacity: 0 }, { opacity: 1, duration: 0.5, onComplete: () => gsap.to(txt, { opacity: 0.35, duration: 0.8, yoyo: true, repeat: -1, ease: 'sine.inOut' }) });
       const evs = ['click', 'keydown', 'touchend', 'wheel'];
       const go = e => {
-        if (e.type !== 'wheel') m.start();                  // must run inside the gesture itself
+        if (e.type !== 'wheel') m.start();
         evs.forEach(n => removeEventListener(n, go, true));
         gsap.killTweensOf(txt); gsap.set(txt, { opacity: 1 });
         res();

@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#292c39" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" /></noscript>
   <link rel="stylesheet" href="./css/style.css" />
 </head>
@@ -31,6 +31,13 @@
       <g clip-path="url(#heartClip)"><rect class="loader__fill" x="0" y="0" width="32" height="28" fill="url(#sunsetFill)" /></g>
     </svg>
     <p class="loader__text"><span id="loaderPct">0</span>%  ·  <span class="loader__for"></span></p>
+  </div>
+
+  <!-- BLOCKING OVERLAY: shows "Tap to begin" after loader reaches 100%, blocks interaction until tapped -->
+  <div class="tap-gate" id="tapGate" role="button" tabindex="0" aria-label="Tap to begin">
+    <div class="tap-gate__inner">
+      <p class="tap-gate__text">Tap anywhere to begin</p>
+    </div>
   </div>
 
   <!-- ART STAGE: fixed behind everything. Layers + UI interlock in one 3D scene. -->
@@ -156,8 +163,7 @@
         </div>
         <p class="letter__hint" id="letterHint" data-copy="letterHint"></p>
       </div>
-      <div class="letter__static" aria-hidden="true"><img src="assets/emoji/1f48b.svg" alt="" /><img src="assets/emoji/2764.svg" alt="" /><img src="assets/emoji/1f618.svg" alt="" /><img src="assets/emoji/1f496.svg" alt="" /><img src="assets/emoji/1f48b.svg" alt="" />
-      </div>
+      <div class="letter__static" aria-hidden="true"><img src="assets/emoji/1f48b.svg" alt="" /><img src="assets/emoji/2764.svg" alt="" /><img src="assets/emoji/1f618.svg" alt="" /><img src="assets/emoji/1f61a.svg" alt="" /></div>
     </section>
 
     <!-- 7 · FINALE (night) -->
@@ -184,7 +190,6 @@
 
   <footer class="footer" id="footer">
     <p>Made with love by Raaga</p>
-    <!-- Licences and credits for every artwork, icon, emoji and sprite used: see CREDITS.md -->
   </footer>
 
   <!-- the hearts that fill the screen after the final click (+ the pink veil) -->
@@ -196,17 +201,14 @@
     <canvas class="night__fx" id="nightFx" aria-hidden="true"></canvas>
     <div class="night__copy">
       <h2 class="night__title" id="nightTitle" data-copy="nightTitle"></h2>
-      
     </div>
-    <button class="night__shy" id="nightShy" type="button" aria-live="polite"><span class="shy__in"><span class="shy__text" data-copy="nightShy"></span><img class="shy__emoji" src="./assets/emoji/shy-blush.png" alt="" width="40" height="41" draggable="false"></span></button>
+    <button class="night__shy" id="nightShy" type="button" aria-live="polite"><span class="shy__in"><span class="shy__text" data-copy="nightShy"></span><img class="shy__emoji" src="./assets/emoji/shy-blush.png" alt="" /></span></button>
     <p class="night__hint" id="nightHint" data-copy="nightHint"></p>
     <button class="night__back" id="nightBack" type="button" data-copy="nightBack"></button>
     <p class="night__credit" id="nightCredit"></p>
   </section>
 
   <script type="module" src="./js/main.js"></script>
-  <!-- if the app script never starts (the raw source was uploaded instead of the built site, or the file was opened by double-click) say so instead of sitting at 0% -->
-  <script>setTimeout(function () { if (!window.__booted) { var t = document.querySelector('.loader__text'); if (t) t.textContent = 'The site could not start. It has to be served from the built folder (docs/) over http, see README: Put it on GitHub.'; } }, 7000);</script>
+  <script>setTimeout(function () { if (!window.__booted) { var t = document.querySelector('.loader__text'); if (t) t.textContent = 'The site could not start. It has to be served from the built folder or run via `npm run dev`.'; } }, 2500);</script>
 </body>
 </html>
-

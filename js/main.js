@@ -99,6 +99,10 @@ async function boot() {
 
   /* loader lifts → hero intro */
   await loader.out();
+  
+  /* CRITICAL: Initialize music AFTER loader completes, so it waits for tap */
+  fx.initMusic(config.musicFile);
+  
   window.__lenis?.start();
   intro(title);
   ScrollTrigger.refresh();
@@ -124,7 +128,7 @@ function buildMaster(sky, extras) {
   /* a colour-grade overlay at opacity 0 is switched off completely, so the GPU doesn't keep full-screen layers for nothing */
   const fades = [...Object.values(tints), ...nightEls, sky.stars.canvas];
   /* lite: a 2% grade isn't worth a full-screen layer */
-  const syncHidden = () => fades.forEach(el => { const off = (parseFloat(el.style.opacity) || 0) < (perf.lite ? 0.025 : 0.004);  if (el._off !== off) { el._off = off; el.classList.toggle('is-hidden', off); } });
+  const syncHidden = () => fades.forEach(el => { const off = (parseFloat(el.style.opacity) || 0) < (perf.lite ? 0.025 : 0.004);  if (el._off !== off) { el._off = off; el.classList.toggle('is-hidd[...]');
   tl.eventCallback('onUpdate', syncHidden);
 
   const build = () => {
@@ -198,5 +202,4 @@ function fontsReady() {
   return Promise.race([document.fonts?.ready ?? Promise.resolve(), new Promise(r => setTimeout(r, 2500))]);
 }
 
-fx.initMusic(config.musicFile);
 boot();
